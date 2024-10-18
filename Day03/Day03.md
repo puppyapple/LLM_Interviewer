@@ -1,3 +1,27 @@
+这一期内容很短但是妥妥的纯干货。
+
+[上一期](https://mp.weixin.qq.com/s/meuW5qrf-dcu_BasP7modg)完整介绍了使用`LlamaIndex`构建一个**基于知识库构建RAG**基本方案和代码。
+
+其中其实没有深入一个细节，那就是对**文本的切分**。
+
+稍微接触过`RAG`的就知道，由于文本结构差异很大，切分时候的坑比较多：
+
+标题、列表、区块引用、代码块、表格、HTML标签、LaTeX表达，等等这些复杂的内容的集合，都给文本切分带来了很大的挑战。
+
+现在很多方案会引入语言模型来进行语义切分，但大大增加了复杂度和开销。
+
+`Jina AI`的`CEO`最近对此发表了自己的看法，并且开源分享了一段50多行的正则为核心的代码，能够高效处理各种复杂的文本切分场景。
+
+![](https://erxuanyi-1257355350.cos.ap-beijing.myqcloud.com/jina_ai-2024-10-18-11-11-56.png)
+
+我在前一期的代码里尝试了很多开源库自带的`splitter`，发现效果都不太好，于是打算试试这个。
+
+这里有个问题在于`Jina AI`的`CEO`的[原始代码](https://gist.github.com/hanxiao/3f60354cf6dc5ac698bc9154163b4e6a)是基于`Typescript`的，里面的正则直接拿到`Python`里又没法直接使用，所以需要一些改造。
+
+下面直接给出改造后的代码，大家有需要的直接拿走不谢：
+
+
+```python
 import regex as re
 
 MAX_HEADING_LENGTH = 10
@@ -111,26 +135,60 @@ def split_text(text):
     #     print(f"{i}: {item}")
 
     return filtered_result
+```
+
+我用上一篇文章的`Markdown`文档测试了一下，耗时只要`621 μs`。
 
 
-# 示例使用
-if __name__ == "__main__":
-    sample_text = """
-    # 标题1
-    
-    这是一个段落。它包含了一些文本。
-    
-    - 列表项1
-    - 列表项2
-    
-    > 这是一个引用。
-        ```python
-    def hello_world():
-        print("Hello, World!")    ```
-    
-    这是另一个段落，带有一些**粗体**和*斜体*文本。
-    """
+```python
+doc = open("../Day02/Day02.md", "r", encoding="utf-8").read()
+%time chunks = split_text(doc)
+```
+```text
+CPU times: user 893 μs, sys: 170 μs, total: 1.06 ms
+Wall time: 698 μs
+```
 
-    result = split_text(sample_text)
-    for i, item in enumerate(result, 1):
-        print(f"{i}. {item}")
+
+以**代码块**的情况为例子，看看切分效果：
+
+
+```python
+print(chunks[15])
+```
+
+```text
+    ```python
+    def build_index(self, doc_dir: str | Path):
+        if isinstance(doc_dir, str):
+            doc_dir = Path(doc_dir)
+    
+        documents = []
+    
+        # 处理普通文本文件
+        docs_loader = SimpleDirectoryReader(input_dir=str(doc_dir), file_extractor={}) docs = docs_loader.load_data(num_workers=os.cpu_count())
+        documents.extend(docs)
+    
+        logger.info(f"已加载 {len(documents)} 个文件")
+    
+        node_parser = SentenceWindowNodeParser.from_defaults(
+            sentence_splitter=custom_splitter,
+            window_size=1,
+            window_metadata_key="window",
+            original_text_metadata_key="original_text",
+        )
+        sentence_nodes = node_parser.get_nodes_from_documents(documents)
+        logger.info(f"已构建 {len(sentence_nodes)} 个节点")
+    
+        self.index = VectorStoreIndex(
+            sentence_nodes, show_progress=True, embed_model=self.embedding_model
+        )
+        logger.info("索引构建完成")
+    ```
+```
+
+完美地切出了代码块，比很多开源库自带的`splitter`效果都要好。
+
+尽管没有任何语义理解的介入，但在很多应用场景里，这个程度的文档切分已经很足够了，加上一些`chunk`检索的策略组合，就能实现非常不错的效果。
+
+
