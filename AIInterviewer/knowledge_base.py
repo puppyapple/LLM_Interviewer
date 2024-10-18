@@ -22,6 +22,7 @@ from .text_chunker import split_text
 
 from .private_consts import JINA_BASE_URL, JINA_API_KEY
 from .custom_modules import ChineseBM25Retriever, SimilarityPostprocessorWithSigmoid
+from .llm_client import get_llama_index_client
 
 
 def chinese_tokenizer(text: str) -> Generator[str, None, None]:
@@ -48,63 +49,27 @@ def custom_splitter(text: str) -> List[str]:
     return response.json()["chunks"]
 
 
-def get_llm(api_type):
-    if api_type == "azure":
-        from .private_consts import (
-            AZURE_API_KEY,
-            AZURE_ENDPOINT,
-            AZURE_API_VERSION,
-            AZURE_MODEL,
-        )
-        from llama_index.llms.azure_openai import AzureOpenAI
-
-        return AZURE_MODEL, AzureOpenAI(
-            model=AZURE_MODEL,
-            api_key=AZURE_API_KEY,
-            azure_endpoint=AZURE_ENDPOINT,
-            api_version=AZURE_API_VERSION,
-        )
-    elif api_type == "qwen":
-        from .private_consts import QWEN_BASE_URL, QWEN_API_KEY, QWEN_MODEL
-
-        # from llama_index.llms.openai import OpenAI
-        from llama_index.llms.dashscope import DashScope
-
-        # return QWEN_MODEL, OpenAI(
-        #     model=QWEN_MODEL, api_base=QWEN_BASE_URL, api_key=QWEN_API_KEY
-        # )
-        return QWEN_MODEL, DashScope(model_name=QWEN_MODEL, api_key=QWEN_API_KEY)
-    elif api_type == "ollama":
-        from .consts import OLLAMA_BASE_URL, OLLAMA_API_KEY, OLLAMA_MODEL
-        from llama_index.llms.openai import OpenAI
-
-        return OLLAMA_MODEL, OpenAI(
-            model=OLLAMA_MODEL, api_base=OLLAMA_BASE_URL, api_key=OLLAMA_API_KEY
-        )
-    else:
-        raise ValueError(f"Invalid API type: {api_type}")
-
-
 class KnowledgeBase:
     def __init__(
         self,
         api_type: str = "qwen",
         embedding_model: str = "local:BAAI/bge-large-zh-v1.5",
+        index_path: Optional[str | Path] = None,
         save_dir: Optional[str | Path] = None,
         file_dir: Optional[str | Path] = None,
-        index_path: Optional[str | Path] = None,
         stop_words: Optional[List[str]] = None,
         top_k: int = 20,
-        similarity_cutoff: float = 0.7,
+        # similarity_cutoff: float = 0.7,
     ):
-        self.llm_model_name, self.llm = get_llm(api_type)
+        self.llm_model_name, self.llm = get_llama_index_client(api_type)
         Settings.llm = self.llm
         self.embedding_model = embedding_model
+        Settings.embed_model = self.embedding_model
         self.rerank = FlagEmbeddingReranker(
             model="BAAI/bge-reranker-v2-m3", top_n=top_k
         )
 
-        if index_path:
+        if index_path and os.path.exists(index_path):
             self.load_index(index_path)
         elif file_dir:
             self.build_index(file_dir)
@@ -112,9 +77,7 @@ class KnowledgeBase:
                 self.save_index(save_dir)
         else:
             raise ValueError("file_dir 和 index_path 不能同时为空")
-        self.setup_query_engine(
-            stop_words=stop_words, top_k=top_k, similarity_cutoff=similarity_cutoff
-        )
+        self.setup_query_engine(stop_words=stop_words, top_k=top_k)
 
     def load_index(self, path):
         self.index = load_index_from_storage(
@@ -181,19 +144,20 @@ class KnowledgeBase:
             use_async=True,
             verbose=True,
         )
-        similarity_postprocessor = SimilarityPostprocessorWithSigmoid(
+        self.similarity_postprocessor = SimilarityPostprocessorWithSigmoid(
             similarity_cutoff=similarity_cutoff,
         )
         self.query_engine = RetrieverQueryEngine.from_args(
             retriever,
             response_mode=ResponseMode.NO_TEXT,
-            node_postprocessors=[self.rerank, similarity_postprocessor],
+            node_postprocessors=[self.rerank, self.similarity_postprocessor],
         )
         logger.info("查询引擎设置完成")
 
-    def query(self, question):
+    def query(self, question, similarity_cutoff=0.7):
         if not self.query_engine:
             raise ValueError("查询引擎尚未设置,请先调用setup_query_engine()")
+        self.similarity_postprocessor.similarity_cutoff = similarity_cutoff
         response = self.query_engine.query(question)
         return response
 

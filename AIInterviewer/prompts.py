@@ -1,5 +1,7 @@
 RESUME_ANALYSIS_SYSTEM_PROMPT = "你是一个专业的简历分析助手。"
 
+INTERVIEW_SYSTEM_PROMPT = "你是一个专业的面试官。"
+
 RESUME_PROJECT_EXTRACTION_PROMPT = """
 请仔细阅读以下简历文本,并按照以下步骤提取和整合相关信息:
 
@@ -31,7 +33,7 @@ RESUME_PROJECT_EXTRACTION_PROMPT = """
 """
 
 KEY_POINTS_EXTRACTION_PROMPT = """
-请仔细阅读以下项目描述,并提取出其中的关键技术点、主要职责和成就。每个关键点应该简洁明了,便于后续处理。
+请仔细阅读以下项目描述,并提取出其中的技术关键点。每个关键点应该简洁明了,便于后续处理。
 
 项目描述:
 {project}

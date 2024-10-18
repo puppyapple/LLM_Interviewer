@@ -6,41 +6,15 @@ from haystack.components.converters import (
     TextFileToDocument,
 )
 from pathlib import Path
-from openai import OpenAI, AzureOpenAI
 from loguru import logger
-from .prompts import RESUME_ANALYSIS_SYSTEM_PROMPT, RESUME_PROJECT_EXTRACTION_PROMPT
 from functools import lru_cache
-
-
-def get_client(api_type):
-    if api_type == "azure":
-        from .private_consts import (
-            AZURE_API_KEY,
-            AZURE_ENDPOINT,
-            AZURE_API_VERSION,
-            AZURE_MODEL,
-        )
-
-        return AZURE_MODEL, AzureOpenAI(
-            api_key=AZURE_API_KEY,
-            azure_endpoint=AZURE_ENDPOINT,
-            api_version=AZURE_API_VERSION,
-        )
-    elif api_type == "qwen":
-        from .private_consts import QWEN_BASE_URL, QWEN_API_KEY, QWEN_MODEL
-
-        return QWEN_MODEL, OpenAI(base_url=QWEN_BASE_URL, api_key=QWEN_API_KEY)
-    elif api_type == "ollama":
-        from .consts import OLLAMA_BASE_URL, OLLAMA_API_KEY, OLLAMA_MODEL
-
-        return OLLAMA_MODEL, OpenAI(base_url=OLLAMA_BASE_URL, api_key=OLLAMA_API_KEY)
-    else:
-        raise ValueError(f"Invalid API type: {api_type}")
+from .prompts import RESUME_ANALYSIS_SYSTEM_PROMPT, RESUME_PROJECT_EXTRACTION_PROMPT
+from .llm_client import get_openai_client
 
 
 class ResumeParser:
     def __init__(self, api_type="openai"):
-        self.model, self.client = get_client(api_type)
+        self.model, self.client = get_openai_client(api_type)
         logger.info(f"Using API type: {api_type}, model: {self.model}")
 
     @lru_cache(maxsize=100)
