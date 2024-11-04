@@ -96,12 +96,6 @@ class KnowledgeBase:
         )
         docs = docs_loader.load_data(num_workers=os.cpu_count())
         documents.extend(docs)
-        # pdf_loader = PDFReader()
-        # for pdf_file in doc_dir.glob("*.pdf"):
-        #     docs = pdf_loader.load_data(file=pdf_file)
-        #     doc_text = "\n".join([doc.text for doc in docs])
-        #     documents.append(Document(text=doc_text))
-
         logger.info(f"已加载 {len(documents)} 个文件")
 
         node_parser = SentenceWindowNodeParser.from_defaults(

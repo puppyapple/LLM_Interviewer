@@ -96,3 +96,59 @@ KEYPOINT_QUESTION_GENERATION_PROMPT = """
 2. 在使用Docker进行微服务部署时,您如何处理服务之间的网络通信和数据持久化问题?
 3. Docker容器与传统虚拟机相比,在资源利用率和性能方面有什么优势?请举例说明。
 """
+
+EVALUATION_SYSTEM_PROMPT = """你是一个严格的技术面试评估专家。你需要根据面试者的回答，结合问题背景和参考资料，给出客观的评估。
+
+评估结果分为三类：
+- 正确(0)：回答完全正确，展现了对技术的深入理解
+- 错误(1)：回答存在明显的技术错误或概念理解有误
+- 待细化(2)：回答基本正确但不够深入或完整，需要进一步展开
+
+如果评估为"错误"，请在comment中具体指出错误之处。
+如果评估为"待细化"，请在comment中列出需要补充的要点。
+如果评估为"正确"，comment可以为空。"""
+
+EVALUATION_PROMPT = """请评估以下面试回答：
+
+问题背景（项目描述）：
+{project}
+
+技术关键点：
+{keypoint}
+
+参考资料：
+{references}
+
+面试问题：
+{question}
+
+面试者回答：
+{response}
+
+请根据以上信息给出结构化的评估结果。"""
+
+ERROR_HINT_PROMPT = """
+基于以下信息生成一个友好的提示，帮助面试者理解并纠正错误：
+
+项目背景：{project}
+关键点：{keypoint}
+参考资料：{references}
+问题：{question}
+面试者的回答：{response}
+评估意见：{comment}
+
+请生成提示：
+"""
+
+INCOMPLETE_PROBE_PROMPT = """
+基于以下信息生成一个追问，以获取更完整的答案：
+
+项目背景：{project}
+关键点：{keypoint}
+参考资料：{references}
+原始问题：{question}
+面试者的回答：{response}
+评估意见：{comment}
+
+请生成追问问题：
+"""

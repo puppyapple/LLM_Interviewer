@@ -17,6 +17,13 @@ def get_llama_index_client(api_type):
             azure_endpoint=AZURE_ENDPOINT,
             api_version=AZURE_API_VERSION,
         )
+    elif api_type == "openai":
+        from llama_index.llms.openai import OpenAI
+        from .private_consts import OPENAI_BASE_URL, OPENAI_API_KEY, OPENAI_MODEL
+
+        return OPENAI_MODEL, OpenAI(
+            model=OPENAI_MODEL, api_base=OPENAI_BASE_URL, api_key=OPENAI_API_KEY
+        )
     elif api_type == "qwen":
         from .private_consts import QWEN_BASE_URL, QWEN_API_KEY, QWEN_MODEL
 
@@ -52,6 +59,10 @@ def get_openai_client(api_type):
             azure_endpoint=AZURE_ENDPOINT,
             api_version=AZURE_API_VERSION,
         )
+    elif api_type == "openai":
+        from .private_consts import OPENAI_BASE_URL, OPENAI_API_KEY, OPENAI_MODEL
+
+        return OPENAI_MODEL, OpenAI(base_url=OPENAI_BASE_URL, api_key=OPENAI_API_KEY)
     elif api_type == "qwen":
         from .private_consts import QWEN_BASE_URL, QWEN_API_KEY, QWEN_MODEL
 
