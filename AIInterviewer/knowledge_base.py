@@ -93,6 +93,7 @@ class KnowledgeBase:
         docs_loader = SimpleDirectoryReader(
             input_dir=str(doc_dir),
             recursive=True,
+            required_exts=[".md", ".txt", ".doc", ".docx", ".pdf"],
         )
         docs = docs_loader.load_data(num_workers=os.cpu_count())
         documents.extend(docs)

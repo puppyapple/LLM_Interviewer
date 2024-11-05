@@ -114,7 +114,12 @@ class Interviewer:
     ) -> dict:
         if mode == "next":
             try:
-                return next(self.questions_from_cv)
+                question = next(self.questions_from_cv)
+                if evaluation is not None and evaluation.eval_status == 3:
+                    question["question"] = (
+                        f"好的那我们换一个问题：{question['question']}"
+                    )
+                return question
             except StopIteration:
                 return dict()
 
@@ -131,7 +136,7 @@ class Interviewer:
                 )
                 if hint:
                     new_question_dict = current_question.copy()
-                    new_question_dict["question"] = hint
+                    new_question_dict["question"] = f"给你一些提示：{hint}"
                     return new_question_dict
                 else:
                     return self.fetch_question("next")
@@ -158,7 +163,12 @@ class Interviewer:
         evaluation = self.evaluator.evaluate(question, response)
         logger.info(f"{evaluation=}")
         if evaluation.passed:
-            next_question = self.fetch_question("next")
+            next_question = self.fetch_question(
+                "next",
+                current_question=question,
+                response=response,
+                evaluation=evaluation,
+            )
         else:
             next_question = self.fetch_question(
                 "stay",

@@ -1,13 +1,13 @@
 from typing import Optional, Literal, Dict
 from pydantic import BaseModel
 import instructor
-from openai import OpenAI
+from loguru import logger
 from .llm_client import get_openai_client
 from .prompts import EVALUATION_SYSTEM_PROMPT, EVALUATION_PROMPT
 
 
 class EvaluationResult(BaseModel):
-    eval_status: Literal[0, 1, 2]  # 0: 正确, 1: 错误, 2: 待细化
+    eval_status: Literal[0, 1, 2, 3]  # 0: 正确, 1: 错误, 2: 待细化, 3: 不知道
     comment: Optional[str] = None
 
     @property
@@ -27,6 +27,8 @@ class Evaluator:
         self.client = instructor.from_openai(openai_client, mode=instructor.Mode.JSON)
 
     def evaluate(self, question: dict, response: str) -> EvaluationResult:
+        logger.info(f"{question=}")
+        logger.info(f"{response=}")
         prompt = EVALUATION_PROMPT.format(
             project=question["project"],
             keypoint=question.get("keypoint", "无"),

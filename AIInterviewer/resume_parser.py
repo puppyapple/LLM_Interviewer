@@ -44,8 +44,10 @@ class ResumeParser:
             converter = PDFMinerToDocument()
         elif file_extension in [".docx", ".doc"]:
             converter = DOCXToDocument()
-        else:
+        elif file_extension in [".txt", ".md"]:
             converter = TextFileToDocument()
+        else:
+            raise ValueError(f"不支持的文件类型: {file_extension}")
 
         # 读取并转换文件内容
         doc = converter.run(
