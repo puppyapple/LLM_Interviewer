@@ -57,10 +57,12 @@ class ResumeParser:
         ic(text, len(text))
 
         # 使用大模型 API 提取项目信息
-        projects = self.extract_projects(text)
+        projects_str = self.extract_projects(text)
+        if projects_str is None:
+            return []
         if getattr(self.extract_projects, "cache_info", None):
             cache_info = self.extract_projects.cache_info()
             if cache_info.hits > 0:
                 logger.info(f"使用缓存的项目信息 (命中次数: {cache_info.hits})")
-
+        projects = [t for t in projects_str.split("\n\n") if len(t) > 20]
         return projects

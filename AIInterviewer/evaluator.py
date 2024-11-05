@@ -13,7 +13,7 @@ class EvaluationResult(BaseModel):
     @property
     def passed(self) -> bool:
         """用于兼容interviewer.py中的判断"""
-        return self.eval_status == 0
+        return self.eval_status == 0 or self.eval_status == 3
 
     def to_dict(self) -> Dict:
         """用于兼容interviewer.py中的参数传递"""

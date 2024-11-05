@@ -1,4 +1,4 @@
-from icecream import ic
+import json
 from .knowledge_base import KnowledgeBase
 from .prompts import (
     KEY_POINTS_EXTRACTION_PROMPT,
@@ -9,6 +9,7 @@ from .prompts import (
 )
 from .llm_client import get_openai_client
 from functools import lru_cache
+from loguru import logger
 
 
 class QuestionGenerator:
@@ -82,6 +83,9 @@ class QuestionGenerator:
         return res
 
     def generate_questions(self, projects):
+        logger.info(f"{projects=}")
+        if not projects:
+            return []
         question_list = []
         for project in projects:
             questions = dict()
@@ -114,5 +118,9 @@ class QuestionGenerator:
                 )
 
             question_list.append(questions)
-
+        logger.info(f"{question_list=}")
         return question_list
+
+    def dump_questions(self, questions):
+        with open("./questions.json", "w") as f:
+            json.dump(questions, f, ensure_ascii=False)

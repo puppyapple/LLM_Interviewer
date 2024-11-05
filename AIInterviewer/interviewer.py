@@ -1,7 +1,9 @@
+import json
 from typing import Literal, Optional, List, Iterator
 from .evaluator import Evaluator, EvaluationResult
 from .prompts import ERROR_HINT_PROMPT, INCOMPLETE_PROBE_PROMPT, INTERVIEW_SYSTEM_PROMPT
 from .llm_client import get_openai_client
+from loguru import logger
 
 
 def question_generator(
@@ -9,7 +11,12 @@ def question_generator(
     max_project_questions: int,
     max_keypoints: int,
     max_questions_per_keypoint: int,
+    load_path: Optional[str] = None,
 ) -> Iterator[dict]:
+    if load_path:
+        with open(load_path, "r") as f:
+            questions_from_cv = json.load(f)
+
     # 生成reform之后的questions的生成器，每个项目最多max_project_questions个项目问题，以及max_keypoint_questions个关键点问题
     for questions_per_project in questions_from_cv:
         for question in questions_per_project["project_questions"][
@@ -149,8 +156,14 @@ class Interviewer:
 
     def process_response(self, question: dict, response: str):
         evaluation = self.evaluator.evaluate(question, response)
+        logger.info(f"{evaluation=}")
         if evaluation.passed:
             next_question = self.fetch_question("next")
         else:
-            next_question = self.fetch_question("stay", evaluation)
+            next_question = self.fetch_question(
+                "stay",
+                current_question=question,
+                response=response,
+                evaluation=evaluation,
+            )
         return next_question

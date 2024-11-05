@@ -62,7 +62,7 @@ class KnowledgeBase:
         # similarity_cutoff: float = 0.7,
     ):
         self.llm_model_name, self.llm = get_llama_index_client(api_type)
-        Settings.llm = self.llm
+        # Settings.llm = self.llm
         self.embedding_model = embedding_model
         Settings.embed_model = self.embedding_model
         self.rerank = FlagEmbeddingReranker(
@@ -130,7 +130,7 @@ class KnowledgeBase:
         )
         retriever = QueryFusionRetriever(
             [vector_retriever, bm25_retriever],
-            llm=None,
+            llm=self.llm,
             similarity_top_k=top_k,
             num_queries=1,  # set this to 1 to disable query generation
             retriever_weights=[0.6, 0.4],
