@@ -9,6 +9,8 @@ https://github.com/puppyapple/LLM_Interviewer
 > 前端`UI`的代码`gradio.py`并没有上传到仓库中，有需要的朋友可以付费阅读全文获取（搬砖不易，请多多支持）；
 > 不过即使没有`UI`代码，整个项目的核心功能也是完整的。
 
+文章链接：[有了这个AI面试官，可以尽情地自己卷自己了｜从零手搓AI面试官｜Day Final](https://mp.weixin.qq.com/s/rYbh44p89gOuvBrZ_6ObMQ)
+
 话不多说先上效果图：
 
 ![UI](https://erxuanyi-1257355350.cos.ap-beijing.myqcloud.com/UI_all-2024-11-07-15-44-41.png)
